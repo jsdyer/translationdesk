@@ -1,0 +1,78 @@
+{
+  "defaultSource": "en",
+  "defaultTarget": "fr",
+  "libreTranslateEndpoint": "",
+  "maxCharacters": 12000,
+  "maxParagraphCharacters": 3000,
+  "requestTimeoutSeconds": 60,
+  "languages": [
+    {
+      "code": "en",
+      "name": "English"
+    },
+    {
+      "code": "fr",
+      "name": "French"
+    },
+    {
+      "code": "es",
+      "name": "Spanish"
+    },
+    {
+      "code": "de",
+      "name": "German"
+    },
+    {
+      "code": "it",
+      "name": "Italian"
+    },
+    {
+      "code": "pt",
+      "name": "Portuguese"
+    },
+    {
+      "code": "nl",
+      "name": "Dutch"
+    },
+    {
+      "code": "ja",
+      "name": "Japanese"
+    },
+    {
+      "code": "ko",
+      "name": "Korean"
+    },
+    {
+      "code": "zh",
+      "name": "Chinese"
+    },
+    {
+      "code": "zh-Hant",
+      "name": "Chinese (Traditional)"
+    },
+    {
+      "code": "ar",
+      "name": "Arabic"
+    },
+    {
+      "code": "uk",
+      "name": "Ukrainian"
+    }
+  ],
+  "examples": [
+    {
+      "id": "request",
+      "name": "A public-records request",
+      "source": "en",
+      "target": "fr",
+      "text": "Hello,\n\nI would like a copy of the public report. Please let me know whether a digital version is available.\n\nThank you for your help."
+    },
+    {
+      "id": "travel",
+      "name": "An everyday question",
+      "source": "en",
+      "target": "fr",
+      "text": "Where is the next bus stop, please?\n\nI am travelling to Halifax tomorrow."
+    }
+  ]
+}

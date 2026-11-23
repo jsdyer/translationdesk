@@ -1,21 +1,13 @@
-import test from 'node:test';
-import assert from 'node:assert/strict';
-import { cleanLines } from '../web/model.mjs';
-test('trims, removes blanks and preserves first-seen order', () => {
-  assert.deepEqual(cleanLines('  Halifax\nLangley\nHalifax\n\nVancouver  '), {
-    text: 'Halifax\nLangley\nVancouver', count: 3, removed: 1,
-  });
-});
-test('supports Windows and old Mac line endings', () => {
-  assert.equal(cleanLines('a\r\nb\ra').text, 'a\nb');
-});
-test('empty text and whitespace produce an empty result', () => {
-  assert.deepEqual(cleanLines(' \n\t'), { text: '', count: 0, removed: 0 });
-});
-test('preserves case and Unicode', () => {
-  assert.equal(cleanLines('Québec\nquébec\n東京\nQuébec').text, 'Québec\nquébec\n東京');
-});
-test('treats markup as ordinary text', () => {
-  assert.equal(cleanLines('<script>alert(1)</script>\n<script>alert(1)</script>').text, '<script>alert(1)</script>');
-});
-test('rejects non-text input', () => { assert.throws(() => cleanLines(null), TypeError); });
+import test from'node:test';import assert from'node:assert/strict';import{readFileSync}from'node:fs';import{language,sourceText,paragraphs,pairs,endpoint,glossary,termChecks,project,readProject,csv,translateParagraphs,libreTranslate}from'../web/model.mjs';
+test('language codes accept additional valid languages beyond presets',()=>{assert.equal(language('pl'),'pl');assert.equal(language('zh-hant'),'zh-Hant');assert.throws(()=>language('<script>'));});
+test('paragraph extraction preserves single-line breaks and normalizes CRLF',()=>assert.deepEqual(paragraphs('One\r\nline\r\n\r\nTwo'),['One\nline','Two']));
+test('validation rejects empty, oversized and single huge paragraphs',()=>{assert.throws(()=>sourceText(''));assert.throws(()=>sourceText('12345',4));assert.throws(()=>sourceText('12345',10,4));assert.equal(sourceText('One\n\nTwo').parts.length,2);});
+test('pairing exposes unequal paragraphs instead of dropping text',()=>assert.deepEqual(pairs('A\n\nB','C'),[{number:1,source:'A',target:'C'},{number:2,source:'B',target:''}]));
+test('endpoint rejects credentials, unsafe schemes and query keys',()=>{assert.equal(endpoint('https://self.example/base/'),'https://self.example/base');for(const value of['http://host','https://user:key@host','https://host?key=x','javascript:alert(1)'])assert.throws(()=>endpoint(value));});
+test('glossary flags expected wording without replacing output',()=>{const terms=glossary('report\trapport\ncopy\tcopie');assert.deepEqual(termChecks('A report','Un document',terms),[{source:'report',target:'rapport',found:false}]);assert.throws(()=>glossary('missing-tab'));});
+test('project exports only defined fields, never runtime keys',()=>{const p=project({sourceLanguage:'en',targetLanguage:'fr',source:'A',target:'B',apiKey:'private',endpoint:'https://private.example',glossary:''});assert.ok(!JSON.stringify(p).includes('private'));assert.equal(readProject(p).source,'A');assert.throws(()=>readProject({...p,target:4}));});
+test('CSV preserves unicode and neutralizes spreadsheet formulas',()=>{const text=csv(pairs('=cmd()','Québec'));assert.ok(text.includes("'=cmd()"));assert.ok(text.includes('Québec'));});
+test('paragraph translation returns only a complete result and preserves order',async()=>{const seen=[];assert.equal(await translateParagraphs(['One','Two'],async s=>{seen.push(s);return s+'!';}),'One!\n\nTwo!');assert.deepEqual(seen,['One','Two']);await assert.rejects(translateParagraphs(['One','Two'],async s=>{if(s==='Two')throw Error('failed');return 'unpublished';}),/failed/);});
+test('LibreTranslate uses explicit endpoint, text format and omits credentials',async()=>{let captured;const r=await libreTranslate('https://translation.example',{q:'Hello',source:'en',target:'fr',apiKey:'temporary'},async(url,options)=>{captured={url,options};return{ok:true,json:async()=>({translatedText:'Bonjour'})};});assert.equal(r,'Bonjour');assert.equal(captured.url,'https://translation.example/translate');assert.equal(captured.options.credentials,'omit');assert.deepEqual(JSON.parse(captured.options.body),{q:'Hello',source:'en',target:'fr',format:'text',api_key:'temporary'});});
+test('malformed and failed provider responses cannot become translations',async()=>{await assert.rejects(libreTranslate('https://x.example',{q:'a',source:'en',target:'fr'},async()=>({ok:false,status:429})),/429/);await assert.rejects(libreTranslate('https://x.example',{q:'a',source:'en',target:'fr'},async()=>({ok:true,json:async()=>({translatedText:4})})),/unrecognized/);});
+test('examples and configurable expansion use actual validation',()=>{const c=JSON.parse(readFileSync(new URL('../web/config.json',import.meta.url)));c.languages.push({code:'pl',name:'Polish'});for(const x of c.languages)assert.ok(language(x.code));for(const x of c.examples){language(x.source);language(x.target);sourceText(x.text,c.maxCharacters,c.maxParagraphCharacters);}});
