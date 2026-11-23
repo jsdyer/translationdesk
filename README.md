@@ -61,3 +61,5 @@ python3 scripts/build.py
 ```
 
 The build is offline and dependency-free. CI browser checks exercise local review/export, a controlled Translator API test double, server permission handling, cancellation/error preservation and mobile layout. That test double verifies integration behavior; it does not evaluate translation quality or claim that the CI browser has a downloaded native model. A real browser/model or configured live server is needed for end-to-end machine-translation verification.
+
+Browser verification on 2026-11-23: desktop Chrome successfully downloaded/prepared the native English–French pair and translated “The library is open today.” to “La bibliothèque est ouverte aujourd’hui.” using the real on-device Translator API. Other browsers and language pairs remain capability-dependent.
